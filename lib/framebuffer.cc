@@ -531,6 +531,99 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 }
 
+static void InitICN2053(GPIO *io, const struct HardwareMapping &h, int columns) {
+	const uint32_t bits_r_on= h.p0_r1 | h.p0_r2;
+	const uint32_t bits_g_on= h.p0_g1 | h.p0_g2;
+	const uint32_t bits_b_on= h.p0_b1 | h.p0_b2;
+	const uint32_t bits_on= bits_r_on | bits_g_on | bits_b_on;
+	const uint32_t bits_off = 0;
+
+	static const char* init_b12 = "1111111111001110";  // register 1
+	static const char* init_b13 = "1110000001100010";  // register 2.
+	static const char* init_b11 = "0101111100000000";  // register 3.
+	io->ClearBits(h.clock | h.strobe);
+	for (int i = 0; i < columns; ++i) {
+		uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
+		if (i > columns - 12) value |= h.strobe;
+		io->Write(value);
+		io->SetBits(h.clock);
+		io->ClearBits(h.clock);
+	}
+	io->ClearBits(h.strobe);
+
+	for (int i = 0; i < columns; ++i) {
+		uint32_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
+		if (i > columns - 13) value |= h.strobe;
+		io->Write(value);
+		io->SetBits(h.clock);
+		io->ClearBits(h.clock);
+	}
+	io->ClearBits(h.strobe);
+
+	for (int i = 0; i < columns; ++i) {
+		uint32_t value = init_b11[i % 16] == '0' ? bits_off : bits_on;
+		if (i > columns - 11) value |= h.strobe;
+		io->Write(value);
+		io->SetBits(h.clock);
+		io->ClearBits(h.clock);
+	}
+	io->ClearBits(h.strobe);
+
+	printf("Initalized panel type ICN2053 (not implemented)\n");
+}
+
+static void InitICN2053D(GPIO *io, const struct HardwareMapping &h) {
+/*	static uint32_t init_b00 = 0x0000;
+	static uint32_t init_b02 = 0x0000;
+	static uint32_t init_b03 = 0x0000;
+	static uint32_t init_b04 = 0x0000;
+	static uint32_t init_b05 = 0x1f70;
+	static uint32_t init_b06 = 0x0000;
+	static uint32_t init_b07 = 0xf3ff;
+	static uint32_t init_b08 = 0x0000;
+	static uint32_t init_b09 = 0x40f3;
+	static uint32_t init_b10 = 0x0000;
+	static uint32_t init_b11 = 0x0000;
+	static uint32_t init_b12 = 0x0000;
+	static uint32_t init_b13 = 0x0000;
+//	задержка 22.3 ms
+
+	io->ClearBits(h.clock | h.strobe);
+
+
+
+
+	for (int i = 0; i < columns; ++i) {
+		uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
+		if (i > columns - 12) value |= h.strobe;
+		io->Write(value);
+		io->SetBits(h.clock);
+		io->ClearBits(h.clock);
+	}
+	io->ClearBits(h.strobe);
+
+	for (int i = 0; i < columns; ++i) {
+		uint32_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
+		if (i > columns - 13) value |= h.strobe;
+		io->Write(value);
+		io->SetBits(h.clock);
+		io->ClearBits(h.clock);
+	}
+	io->ClearBits(h.strobe);
+
+	for (int i = 0; i < columns; ++i) {
+		uint32_t value = init_b11[i % 16] == '0' ? bits_off : bits_on;
+		if (i > columns - 11) value |= h.strobe;
+		io->Write(value);
+		io->SetBits(h.clock);
+		io->ClearBits(h.clock);
+	}
+	io->ClearBits(h.strobe);
+	*/
+
+	printf("Initalized panel type ICN2053 direct (not implemented)\n");
+}
+
 /*static*/ void Framebuffer::InitializePanels(GPIO *io,
                                               const char *panel_type,
                                               int columns) {
@@ -541,6 +634,12 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   else if (strncasecmp(panel_type, "fm6127", 6) == 0) {
     InitFM6127(io, *hardware_mapping_, columns);
   }
+	else if (strncasecmp(panel_type, "icn2053", 6) == 0) {
+		InitICN2053(io, *hardware_mapping_, columns);
+	}
+	else if (strncasecmp(panel_type, "icn2053d", 6) == 0) {
+		InitICN2053D(io, *hardware_mapping_);
+	}
   // else if (strncasecmp(...))  // more init types
   else {
     fprintf(stderr, "Unknown panel type '%s'; typo ?\n", panel_type);
